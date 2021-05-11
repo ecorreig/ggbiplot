@@ -55,7 +55,6 @@ ggbiplot <- function(pcobj, choices = 1:2, scale = 1, pc.biplot = TRUE,
                       varname.abbrev = FALSE, ...)
 {
   library(ggplot2)
-  library(plyr)
   library(scales)
   library(grid)
 
