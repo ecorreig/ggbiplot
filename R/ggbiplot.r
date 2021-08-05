@@ -49,7 +49,7 @@ ggbiplot <- function(pcobj, choices = 1:2, scale = 1, pc.biplot = TRUE,
                       obs.scale = 1 - scale, var.scale = scale, 
                       groups = NULL, ellipse = FALSE, ellipse.prob = 0.68, 
                       labels = NULL, labels.size = 3, alpha = 1, 
-                      var.axes = TRUE, 
+                      var.axes = TRUE, labels.repel = TRUE, max.overlaps=NULL,
                       circle = FALSE, circle.prob = 0.69, 
                       varname.size = 3, varname.adjust = 1.5, 
                       varname.abbrev = FALSE, ...)
@@ -130,6 +130,11 @@ ggbiplot <- function(pcobj, choices = 1:2, scale = 1, pc.biplot = TRUE,
   if(!is.null(groups)) {
     df.u$groups <- groups
   }
+  
+  # max overlaps
+  if (is.null(max.overlaps)) {
+    max.overlaps = Inf
+  }
 
   # Variable Names
   if(varname.abbrev) {
@@ -165,18 +170,31 @@ ggbiplot <- function(pcobj, choices = 1:2, scale = 1, pc.biplot = TRUE,
   }
 
   # Draw either labels or points
-  if(!is.null(df.u$labels)) {
-    if(!is.null(df.u$groups)) {
-      g <- g + geom_text(aes(label = labels, color = groups), 
-                         size = labels.size)
+  if (!is.null(df.u$labels)) {
+    if (!is.null(df.u$groups)) {
+      if (labels.repel) {
+        g <-
+          g + ggrepel::geom_text_repel(aes(label = labels, color = groups),
+                                       size = labels.size, max.overlaps = max.overlaps, show.legend = FALSE)
+      } else {
+        g <- g + geom_text(aes(label = labels, color = groups),
+                           size = labels.size, show.legend = FALSE)
+      }
+      
     } else {
-      g <- g + geom_text(aes(label = labels), size = labels.size)      
+      if (labels.repel) {
+        g <-
+          g + ggrepel::geom_text_repel(aes(label = labels), size = labels.size, max.overlaps = max.overlaps, show.legend = FALSE)
+      } else {
+        g <- g + geom_text(aes(label = labels), size = labels.size, show.legend = FALSE)
+        
+      }
     }
   } else {
-    if(!is.null(df.u$groups)) {
+    if (!is.null(df.u$groups)) {
       g <- g + geom_point(aes(color = groups), alpha = alpha)
     } else {
-      g <- g + geom_point(alpha = alpha)      
+      g <- g + geom_point(alpha = alpha)
     }
   }
 
@@ -185,7 +203,7 @@ ggbiplot <- function(pcobj, choices = 1:2, scale = 1, pc.biplot = TRUE,
     theta <- c(seq(-pi, pi, length = 50), seq(pi, -pi, length = 50))
     circle <- cbind(cos(theta), sin(theta))
 
-    ell <- ddply(df.u, 'groups', function(x) {
+    ell <- plyr::ddply(df.u, 'groups', function(x) {
       if(nrow(x) <= 2) {
         return(NULL)
       }
